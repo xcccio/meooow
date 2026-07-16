@@ -1,42 +1,101 @@
-<!-- Office 2021 enterprise client configuration file sample. To be used for Office 2021 
-     enterprise volume licensed products only, including Office 2021 Professional Plus,
-     Visio 2021, and Project 2021.
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Математическое сердце</title>
+    <style>
+        body { 
+            background-color: #121212; 
+            color: #e78fb3; 
+            font-family: 'Courier New', monospace; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+            margin: 0; 
+            overflow: hidden;
+        }
+        canvas { 
+            background-color: #121212; 
+        }
+        .title { 
+            margin-bottom: 5px; 
+            font-size: 18px; 
+            text-shadow: 0 0 10px rgba(231,143,179,0.5); 
+            text-align: center;
+        }
+        .formula {
+            color: #8fa3e7;
+            font-size: 15px;
+            margin-bottom: 25px;
+            font-weight: bold;
+            background: #1a1a1a;
+            padding: 8px 15px;
+            border-radius: 5px;
+            border: 1px solid #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="title">Инициализация... Семья кривых успешно построена! ❤️</div>
+    <!-- Выводим формулу на экран, чтобы он её сразу оценил -->
+    <div class="formula">(sin(πa/10) + x)² + (cos(πa/10) + y)² = 0.7·y·|x| + 1</div>
+    
+    <canvas id="heart" width="600" height="600"></canvas>
+    
+    <script>
+        const canvas = document.getElementById('heart');
+        const ctx = canvas.getContext('2d');
 
-     Do not use this sample to install Office 365 products.
+        const scale = 110; 
+        ctx.translate(canvas.width / 2, canvas.height / 2 + 50);
+        ctx.scale(scale, -scale); 
 
-     For detailed information regarding configuration options visit: http://aka.ms/ODT. 
-     To use the configuration file be sure to remove the comments
+        function getHeartY(x, a) {
+            const sinPart = Math.sin((Math.PI * a) / 10);
+            const cosPart = Math.cos((Math.PI * a) / 10);
+            
+            const b = 2 * cosPart - 0.7 * Math.abs(x);
+            const c = Math.pow(sinPart + x, 2) + Math.pow(cosPart, 2) - 1;
+            
+            const discriminant = b * b - 4 * c;
+            if (discriminant < 0) return null;
+            
+            return (-b + Math.sqrt(discriminant)) / 2;
+        }
 
-     The following sample allows you to download and install Office 2021 Professional Plus,
-     Visio 2021 Professional, and Project 2021 Professional directly from the Office CDN.
+        let currentA = 1;
 
-     This configuration file will remove all other Click-to-Run products in order to avoid
-     product conflicts and ensure successful setup.
- -->
+        function draw() {
+            if (currentA > 20) return; 
 
+            ctx.strokeStyle = "rgba(231, 143, 179, 0.7)"; 
+            ctx.lineWidth = 1.8 / scale; 
+            ctx.shadowBlur = 8;
+            ctx.shadowColor = "#e78fb3";
 
+            ctx.beginPath();
+            let first = true;
 
-<Configuration>
+            for (let x = -2.5; x <= 2.5; x += 0.005) {
+                let y = getHeartY(x, currentA);
+                if (y !== null) {
+                    if (first) {
+                        ctx.moveTo(x, y);
+                        first = false;
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+            }
+            ctx.stroke();
 
-  <Add OfficeClientEdition="64" Channel="PerpetualVL2021">
-    <Product ID="ProPlus2021Volume">
-      <Language ID="ru-ru" />
-      <ExcludeApp ID="Lync" />
-    </Product>
-    <Product ID="VisioPro2021Volume">
-      <Language ID="ru-ru" />
-    </Product>
-    <Product ID="ProjectPro2021Volume">
-      <Language ID="ru-ru" />
-    </Product>
-  </Add>
+            currentA += 1;
+            setTimeout(draw, 200); 
+        }
 
-  <Remove All="True" />
-
-  <!--  <RemoveMSI All="True" /> -->
-
-  <!--  <Display Level="None" AcceptEULA="TRUE" />  -->
-
-  <!--  <Property Name="AUTOACTIVATE" Value="1" />  -->
-
-</Configuration>
+        draw();
+    </script>
+</body>
+</html>
