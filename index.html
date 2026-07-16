@@ -5,9 +5,9 @@
     <title>Математическое сердце</title>
     <style>
         body { 
-            background-color: #121212; 
+            background-color: #0d0d0d; 
             color: #e78fb3; 
-            font-family: 'Courier New', monospace; 
+            font-family: 'Consolas', 'Courier New', monospace; 
             display: flex; 
             flex-direction: column; 
             align-items: center; 
@@ -16,53 +16,124 @@
             margin: 0; 
             overflow: hidden;
         }
+        .container {
+            position: relative;
+            width: 600px;
+            height: 600px;
+        }
         canvas { 
-            background-color: #121212; 
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        #gridCanvas {
+            z-index: 1;
+        }
+        #heartCanvas {
+            z-index: 2;
         }
         .title { 
-            margin-bottom: 5px; 
-            font-size: 18px; 
+            margin-bottom: 10px; 
+            font-size: 20px; 
             text-shadow: 0 0 10px rgba(231,143,179,0.5); 
             text-align: center;
         }
         .formula {
             color: #8fa3e7;
-            font-size: 15px;
-            margin-bottom: 25px;
+            font-size: 24px; /* Крупный и четкий шрифт */
+            margin-bottom: 20px;
             font-weight: bold;
-            background: #1a1a1a;
-            padding: 8px 15px;
-            border-radius: 5px;
+            background: #141414;
+            padding: 12px 24px;
+            border-radius: 8px;
             border: 1px solid #333;
+            text-shadow: 0 0 5px rgba(143,163,231,0.3);
         }
     </style>
 </head>
 <body>
     <div class="title">Инициализация... Семья кривых успешно построена! ❤️</div>
-    <!-- Выводим формулу на экран, чтобы он её сразу оценил -->
     <div class="formula">(sin(πa/10) + x)² + (cos(πa/10) + y)² = 0.7·y·|x| + 1</div>
     
-    <canvas id="heart" width="600" height="600"></canvas>
+    <div class="container">
+        <!-- Сетка на заднем плане -->
+        <canvas id="gridCanvas" width="600" height="600"></canvas>
+        <!-- Само сердце -->
+        <canvas id="heartCanvas" width="600" height="600"></canvas>
+    </div>
     
     <script>
-        const canvas = document.getElementById('heart');
-        const ctx = canvas.getContext('2d');
+        const hCanvas = document.getElementById('heartCanvas');
+        const hCtx = hCanvas.getContext('2d');
+        const gCanvas = document.getElementById('gridCanvas');
+        const gCtx = gCanvas.getContext('2d');
 
         const scale = 110; 
-        ctx.translate(canvas.width / 2, canvas.height / 2 + 50);
-        ctx.scale(scale, -scale); 
+        
+        // Настройка осей координат для обоих холстов
+        [hCtx, gCtx].forEach(ctx => {
+            ctx.translate(canvasWidth() / 2, canvasHeight() / 2 + 30);
+            ctx.scale(scale, -scale); 
+        });
 
-        function getHeartY(x, a) {
+        function canvasWidth() { return 600; }
+        function canvasHeight() { return 600; }
+
+        // Рисуем математическую сетку, как на картинке
+        function drawGrid() {
+            gCtx.strokeStyle = "#1a1a1a";
+            gCtx.lineWidth = 0.5 / scale;
+            
+            // Мелкая сетка
+            for (let i = -3; i <= 3; i += 0.1) {
+                gCtx.beginPath(); gCtx.moveTo(i, -3); gCtx.lineTo(i, 3); gCtx.stroke();
+                gCtx.beginPath(); gCtx.moveTo(-3, i); gCtx.lineTo(3, i); gCtx.stroke();
+            }
+            
+            // Крупная сетка
+            gCtx.strokeStyle = "#2a2a2a";
+            gCtx.lineWidth = 1 / scale;
+            for (let i = -3; i <= 3; i += 0.5) {
+                gCtx.beginPath(); gCtx.moveTo(i, -3); gCtx.lineTo(i, 3); gCtx.stroke();
+                gCtx.beginPath(); gCtx.moveTo(-3, i); gCtx.lineTo(3, i); gCtx.stroke();
+            }
+
+            // Главные оси X и Y
+            gCtx.strokeStyle = "#444444";
+            gCtx.lineWidth = 1.5 / scale;
+            gCtx.beginPath(); gCtx.moveTo(-3, 0); gCtx.lineTo(3, 0); gCtx.stroke();
+            gCtx.beginPath(); gCtx.moveTo(0, -3); gCtx.lineTo(0, 3); gCtx.stroke();
+        }
+
+        // Точное математическое решение уравнения для обеих половинок (включая нижнюю)
+        function drawHeartFamilyLine(a) {
+            hCtx.beginPath();
+            
             const sinPart = Math.sin((Math.PI * a) / 10);
             const cosPart = Math.cos((Math.PI * a) / 10);
-            
-            const b = 2 * cosPart - 0.7 * Math.abs(x);
-            const c = Math.pow(sinPart + x, 2) + Math.pow(cosPart, 2) - 1;
-            
-            const discriminant = b * b - 4 * c;
-            if (discriminant < 0) return null;
-            
-            return (-b + Math.sqrt(discriminant)) / 2;
+
+            // Рисуем верхнюю (+) и нижнюю (-) части графика для идеального контура
+            for (let sign of [1, -1]) {
+                let first = true;
+                hCtx.beginPath();
+                
+                for (let x = -3; x <= 3; x += 0.005) {
+                    const b = 2 * cosPart - 0.7 * Math.abs(x);
+                    const c = Math.pow(sinPart + x, 2) + Math.pow(cosPart, 2) - 1;
+                    
+                    const discriminant = b * b - 4 * c;
+                    if (discriminant >= 0) {
+                        const y = (-b + sign * Math.sqrt(discriminant)) / 2;
+                        if (first) {
+                            hCtx.moveTo(x, y);
+                            first = false;
+                        } else {
+                            hCtx.lineTo(x, y);
+                        }
+                    }
+                }
+                hCtx.stroke();
+            }
         }
 
         let currentA = 1;
@@ -70,31 +141,18 @@
         function draw() {
             if (currentA > 20) return; 
 
-            ctx.strokeStyle = "rgba(231, 143, 179, 0.7)"; 
-            ctx.lineWidth = 1.8 / scale; 
-            ctx.shadowBlur = 8;
-            ctx.shadowColor = "#e78fb3";
+            hCtx.strokeStyle = "rgba(231, 143, 179, 0.75)"; 
+            hCtx.lineWidth = 1.8 / scale; 
+            hCtx.shadowBlur = 6;
+            hCtx.shadowColor = "#e78fb3";
 
-            ctx.beginPath();
-            let first = true;
-
-            for (let x = -2.5; x <= 2.5; x += 0.005) {
-                let y = getHeartY(x, currentA);
-                if (y !== null) {
-                    if (first) {
-                        ctx.moveTo(x, y);
-                        first = false;
-                    } else {
-                        ctx.lineTo(x, y);
-                    }
-                }
-            }
-            ctx.stroke();
+            drawHeartFamilyLine(currentA);
 
             currentA += 1;
-            setTimeout(draw, 200); 
+            setTimeout(draw, 500); // Медленная, затягивающая анимация (полсекунды на линию)
         }
 
+        drawGrid();
         draw();
     </script>
 </body>
